@@ -1,0 +1,51 @@
+.mainContainer {
+    display: flex;
+    flex-direction: row;
+    height: 100vh;
+    align-items: flex-start;
+    margin: 0; /* Asegura que no hay márgenes externos afectando la altura */
+}
+
+.canvasContainer {
+    flex: 0 0 70%;
+    height: auto;
+    display: block;
+    background-color: #f0f0f0; /* Color de fondo para diferenciar el área */
+}
+
+.panelConteiner {
+    flex: 0 0 30%; /* Cambiado de flex: 1 a flex: 0 0 30% */
+    display: flex;
+    flex-direction: column;
+    padding: 20px;
+    background-color: #ffffff; /* Fondo blanco para los paneles */
+}
+
+.control-panel,
+.button-panel {
+    width: 100%;
+    margin-bottom: 20px;
+}
+
+.control-panel {
+    padding: 20px;
+    border: 1px solid #ccc;
+    box-shadow: 2px 2px 5px rgba(0,0,0,0.1);
+    border-radius: 5px;
+}
+
+.control-item {
+    margin-bottom: 10px;
+}
+
+.control-item label {
+    display: inline-block;
+    margin-right: 10px;
+    width: 130px;
+}
+
+.control-item input,
+.control-item button {
+    padding: 5px;
+    margin-right: 10px;
+}

@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Simulación de Cultivo Microbiano</title>
+    <link rel="stylesheet" href="assets/styles/styles.css">
+    <script src="assets/js/hammer.min.js"></script>
+    <script src="assets/js/chart.umd.js"></script>
+    <script src="assets/js/chartjs-plugin-zoom.min.js"></script>
+    <script type="module" src="assets/js/script.js" defer></script>
+</head>
+
+<body>
+    <div class="mainContainer">
+        <div class="canvasContainer">
+            <canvas id="myChart"></canvas>
+        </div>
+        <div class="panelConteiner">
+            <div class="initialContainer">
+                <div class="control-panel">
+                    <div class="control-item">
+                        <label for="totalTime">Tiempo total:</label>
+                        <input type="number" id="totalTime" value="1">
+                    </div>
+                    <div class="control-item">
+                        <label for="volumne">Volumen:</label>
+                        <input type="number" id="volume" value="10" step="1">
+                    </div>                     <div class="control-item">
+                        <label for="inoculum">Inoculo:</label>
+                        <input type="number" id="inoculum" value="0.05" step="0.1">
+                    </div>                    <div class="control-item">
+                        <label for="initialFCE">[FCE] inicial:</label>
+                        <input type="number" id="initialFCE" value="0.8" step="0.1">
+                    </div>
+                    <div class="control-item">
+                        <label for="initialFn">[Fn] inicial:</label>
+                        <input type="number" id="initialFn" value="0.1" step="0.1">
+                    </div>
+                    <button id="confirmInitialConditions">Confirmar</button>
+                </div>
+            </div>
+
+            <div class="plantContainer">
+                <div class="control-panel">
+                    <div class="control-item">
+                        <label for="flow">Flujo:</label>
+                        <input type="number" id="flow" value="1">
+                        <button id="setFlow">Aplicar</button>
+                    </div>
+                    <div class="control-item">
+                        <label for="reservoirFce">Reservorio [fce]:</label>
+                        <input type="number" id="reservoirFce" value="0.8" step="0.1">
+                    </div>
+                    <div class="control-item">
+                        <label for="reservoirFn">Reservorio [fn]:</label>
+                        <input type="number" id="reservoirFn" value="0.1" step="0.1">
+                    </div>
+                    <div class="control-item">
+                        <label>Activar Revalse:</label>
+                        <button id="activateOverflow">Activar</button>
+                    </div>
+                    <label id="limitation">Irrestricto</label>
+                </div>
+            </div>
+
+            <div class="button-panel">
+                <button id="play">Play</button>
+                <button id="pause">Pause</button>
+                <button id="followData">Seguir Datos Nuevos</button>
+                <button id="reset">Reset</button>
+                <input id="cultureSpeed" type="range" value="700" min="100" max="1000">
+            </div>
+        </div>
+    </div>
+</body>
+
+</html>
