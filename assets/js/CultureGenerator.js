@@ -181,7 +181,6 @@ Tareas
 
 ****************** TODO LIST *********************
 -- Realizar cuentas y comparar con el modelo. Se podria hacer una situacion de testing para la clase
--- Armar un panel de programacion de eventos para que el usuario pueda automatizar el comportamiento de un cultivo
 -- Agregar lecturas de Cl
 -- Agregar lectura de pH
 -- Agregar metabolismo que modifiquen el pH

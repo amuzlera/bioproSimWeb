@@ -71,12 +71,7 @@ const myChart = new Chart(ctx, {
 });
 
 
-
-
-
-
-
-
+//##################################### Data generation #####################################3
 function updateChartData(chart, dataPoint) {
     chart.data.labels.push(parseFloat(currentTime).toFixed(1));
 
@@ -101,7 +96,6 @@ function updateChartData(chart, dataPoint) {
 }
 
 
-
 let currentTime = 0;
 let isRunning = false;
 const dt = 0.1;
@@ -124,8 +118,6 @@ function generateData() {
     currentTime+=dt;
     setTimeout(generateData, 1000 - generationSpeed);
 }
-
-
 
 
 
@@ -166,26 +158,6 @@ document.getElementById("reset").addEventListener("click", function () {
 
     currentTime = 0;
 });
-
-
-
-// Parameters buttons
-document.getElementById('setFlow').addEventListener('click', setFlow);
-document.getElementById('activateOverflow').addEventListener('click', activateOverflow);
-
-
-function setFlow() {
-    var flowValue = document.getElementById('flow').value;
-    var fceValue = document.getElementById('reservoirFce').value;
-    var fnValue = document.getElementById('reservoirFn').value;
-
-    culture.addFlux(flowValue, fceValue, fnValue);
-}
-
-
-function activateOverflow() {
-    culture.addOverflow();
-}
 
 
 
