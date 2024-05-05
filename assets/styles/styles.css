@@ -7,24 +7,32 @@
 }
 
 .canvasContainer {
-    flex: 0 0 70%;
+    position: fixed;
     height: auto;
+    width: 65%;
     display: block;
-    background-color: #f0f0f0; /* Color de fondo para diferenciar el área */
+    box-shadow: 2px 2px 5px rgba(0,0,0,0.1);
+    top: 20px;
+    left: 20px;
 }
 
+
+
 .panelConteiner {
-    flex: 0 0 30%; /* Cambiado de flex: 1 a flex: 0 0 30% */
+    flex: 0 0 30%; /* Ocupa el 30% restante del espacio */
     display: flex;
     flex-direction: column;
     padding: 20px;
-    background-color: #ffffff; /* Fondo blanco para los paneles */
+    margin-left: 70%; /* Comienza después del final del canvasContainer */
+    position: relative; /* Si es necesario para más control de posicionamiento */
+    height: 100vh; /* Ajusta la altura si es necesario */
 }
+
 
 .control-panel,
 .button-panel {
     width: 100%;
-    margin-bottom: 20px;
+    margin: 20px;
 }
 
 .control-panel {

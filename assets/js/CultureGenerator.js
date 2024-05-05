@@ -29,7 +29,11 @@ class CultureGenerator {
     }
 
     addOverflow() {
-        this.culture.overflow = !this.culture.overflow;
+        this.culture.overflow = true;
+    }    
+
+    removeOverflow() {
+        this.culture.overflow = false;
     }
 
     static getInitialData(culture_conditions) {
@@ -131,8 +135,8 @@ class CultureGenerator {
 
     grow(dt) {
         let dx = this.getDx(dt);
-        let ds = this.getDs(dt, dx);
-        let dn = this.getDn(dt, dx);
+        let ds = this.getDs(dt, Math.max(dx,0));
+        let dn = this.getDn(dt, Math.max(dx,0));
         let dv = this.getDv(dt);
 
         if (this.culture.overflow) {
