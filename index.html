@@ -48,10 +48,19 @@
                         <label for="initialFn">[Fn] inicial:</label>
                         <input type="number" id="initialFn" value="0.1" step="0.1">
                     </div>
+                    <div class="control-item">
+                        <label for="temperature">Temperatura:</label>
+                        <input type="number" id="temperature" value="30" step="1">
+                    </div>
+                    <div class="control-item">
+                        <label for="oxygenPercentageOnEntrance">% O<sub>2</sub>:</label>
+                        <input type="number" id="oxygenPercentageOnEntrance" value="21" step="1">
+                    </div>
                     <button id="confirmInitialConditions">Confirmar</button>
+                    <label id="limitation"></label>
                 </div>
             </div>
-
+            
             <div class="container mt-3">
                 <h2>Panel de Acciones</h2>
                 <button class="btn btn-primary" id="addActionButton">Agregar Acción</button>

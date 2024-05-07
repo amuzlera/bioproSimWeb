@@ -1,4 +1,4 @@
-class CultureGenerator {
+export class CultureGenerator {
     constructor(microorganism, bioreactor, culture_conditions) {
         this.morg = JSON.parse(JSON.stringify(microorganism));
         this.bior = JSON.parse(JSON.stringify(bioreactor));
@@ -9,8 +9,11 @@ class CultureGenerator {
         this.calculateCultureDependableVariables();
     }
 
+
+
     calculateCultureDependableVariables() {
-        this.culture.cl_max = 7.5 / 32000;  // Hardcoded to 30°C and 21% oxygen for now
+        this.culture.cl_max = this.getOxygenSolubility()
+        console.log(this.calculateHenryConstantAtTemperature())
         this.bior.OTR_max = this.bior.kla * this.culture.cl_max;
         const gamma_s = 4, gamma_x = 4.2;  // Hardcoded for now
         this.morg.yxov = 1 / ((gamma_s / (this.morg.yxsv * 4)) - gamma_x / 4);
@@ -30,7 +33,7 @@ class CultureGenerator {
 
     addOverflow() {
         this.culture.overflow = true;
-    }    
+    }
 
     removeOverflow() {
         this.culture.overflow = false;
@@ -56,6 +59,39 @@ class CultureGenerator {
         return exportedData;
     }
 
+    //############## oxygen ######################
+
+
+    static HENRY_30C = 0.00123;
+    static R = 8.314;
+
+    calculateHenryConstantAtTemperature() {
+        const tempKelvin = this.culture.t + 273.15;
+        const deltaHSol = -20000;
+
+        const henryTarget = CultureGenerator.HENRY_30C * Math.exp(-deltaHSol / CultureGenerator.R * (1 / tempKelvin - 1 / 303.15));
+
+        return henryTarget;
+    }
+
+    getOxygenSolubility() {
+        const henrysConstant = this.calculateHenryConstantAtTemperature(this.culture.t);
+        const solubility = henrysConstant * this.culture.ppO2;
+        return solubility;
+    }
+
+    getRO2(dx, dt) {
+        const rx = dx / dt; // rx in cmol/h
+        return Math.min(rx / this.morg.yxov + this.morg.mo * this.culture.xv, this.bior.OTR_max)  // Pirt for oxygen ro2 = rx/y'x/o + mo*x
+    }
+
+
+    getCl(dx, dt){
+        const ro2 = this.getRO2(dx, dt);
+        return this.getOxygenSolubility() - ro2/this.bior.kla
+    }
+
+//##################### Biomass ####################3
     getExponentialDx(dt) {
         return this.culture.xv * Math.exp(this.morg.umax * dt) - this.culture.xv;
     }
@@ -100,9 +136,9 @@ class CultureGenerator {
 
         let dx = Math.min(dx_exp, dx_oxygen_lim, dx_fn_lim, dx_fce_lim);
         if (dx_fce_lim < 0) {
-            this.culture.starve_counter = Math.max(this.culture.starve_counter-dt, 0) // Starvation will go down til 0, then cells start dying
-        }else{
-            this.culture.starve_counter = Math.min(this.culture.starve_counter+dt, 2) // to regenerate the starve counter to max (current =2h)
+            this.culture.starve_counter = Math.max(this.culture.starve_counter - dt, 0) // Starvation will go down til 0, then cells start dying
+        } else {
+            this.culture.starve_counter = Math.min(this.culture.starve_counter + dt, 2) // to regenerate the starve counter to max (current =2h)
         }
         this.showLimitation(dx_exp, dx_oxygen_lim, dx_fn_lim, dx_fce_lim)
         return this.culture.starve_counter > 0 ? Math.max(dx, 0) : dx;
@@ -135,8 +171,8 @@ class CultureGenerator {
 
     grow(dt) {
         let dx = this.getDx(dt);
-        let ds = this.getDs(dt, Math.max(dx,0));
-        let dn = this.getDn(dt, Math.max(dx,0));
+        let ds = this.getDs(dt, Math.max(dx, 0));
+        let dn = this.getDn(dt, Math.max(dx, 0));
         let dv = this.getDv(dt);
 
         if (this.culture.overflow) {
@@ -158,12 +194,10 @@ class CultureGenerator {
             fce: this.culture.fce,
             fn: this.culture.fn,
             v: this.culture.v,
+            cl: this.getCl(dx, dt)*1000
         };
     }
 }
-
-export { CultureGenerator };
-
 
 
 
@@ -174,14 +208,13 @@ export { CultureGenerator };
 
 Tareas
 
--- Definir una v1 para montar en un servidor
+-- EL cl se va a 0 pero no se limita en oxigeno, ambos procesos se calculan de manera diferente. Revisar para que coincidan
 
 
 
 
 ****************** TODO LIST *********************
 -- Realizar cuentas y comparar con el modelo. Se podria hacer una situacion de testing para la clase
--- Agregar lecturas de Cl
 -- Agregar lectura de pH
 -- Agregar metabolismo que modifiquen el pH
 -- Agregar formacion de producto como parametro de cultivo

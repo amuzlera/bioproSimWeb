@@ -19,6 +19,8 @@ function getConditionParameters() {
     var inoculum = parseFloat(document.getElementById("inoculum").value);
     var initialFCE = parseFloat(document.getElementById("initialFCE").value);
     var initialFn = parseFloat(document.getElementById("initialFn").value);
+    var t = parseFloat(document.getElementById("temperature").value);
+    var ppO2 = parseFloat(document.getElementById("oxygenPercentageOnEntrance").value/100);
 
     conditions = {
         totalTime: totalTime,
@@ -26,7 +28,9 @@ function getConditionParameters() {
         xv: inoculum,
         fce: initialFCE,
         fn: initialFn,
-        f: 0
+        f: 0,
+        t: t,
+        ppO2:ppO2
     };
 }
 document.getElementById("confirmInitialConditions").addEventListener("click", getConditionParameters)
@@ -111,7 +115,7 @@ function generateData() {
     checkForPendingActions();
 
     const latestData = culture.grow(dt);
-    //console.log(latestData);
+    console.log(latestData);
 
     updateChartData(myChart, latestData);
 
