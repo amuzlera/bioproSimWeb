@@ -23,6 +23,7 @@ export class CultureGenerator {
         this.culture.fce_sr = this.culture.fce_sr || 0;
         this.culture.fn_nr = this.culture.fn_nr || 0;
         this.culture.starve_counter = this.morg.starve_counter || 2;
+        this.culture.p = 0;
     }
 
     addFlux(f, sr, nr) {
@@ -45,6 +46,7 @@ export class CultureGenerator {
             fce: [culture_conditions.fce],
             fn: [culture_conditions.fn],
             v: [culture_conditions.v],
+            p: [culture_conditions.p],
             time: [0]
         };
     }
@@ -80,18 +82,18 @@ export class CultureGenerator {
         return solubility;
     }
 
-    getRO2(dx, dt) {
-        const rx = dx / dt; // rx in cmol/h
-        return Math.min(rx / this.morg.yxov + this.morg.mo * this.culture.xv, this.bior.OTR_max)  // Pirt for oxygen ro2 = rx/y'x/o + mo*x
+    getVRO2(dx, dt) {
+        const Vrx = dx / dt; // Vrx in cmol/h
+        return Math.min(Vrx / this.morg.yxov + this.morg.mo * this.culture.xv, this.bior.OTR_max * this.culture.v)   // Pirt for oxygen ro2 = rx/y'x/o + mo*x
     }
 
 
-    getCl(dx, dt){
-        const ro2 = this.getRO2(dx, dt);
-        return this.getOxygenSolubility() - ro2/this.bior.kla
+    getVCl(dx, dt) {
+        const ro2 = this.getVRO2(dx, dt);
+        return this.getOxygenSolubility() * this.culture.v - ro2 / this.bior.kla
     }
 
-//##################### Biomass ####################3
+    //##################### Biomass #####################
     getExponentialDx(dt) {
         return this.culture.xv * Math.exp(this.morg.umax * dt) - this.culture.xv;
     }
@@ -105,9 +107,21 @@ export class CultureGenerator {
     }
 
     getFceLimDx(dt) {
+        // Calculo Vrs como si consume toda la fce, despejo rx por pirt y divido por dt
+        const ds = this.culture.f * this.culture.fce_sr + this.culture.fce
+        const Vrs = ds / dt;  // Vrs in cmol/h
+        const Vrx = (Vrs - this.morg.ms * this.culture.xv) / this.morg.yxsv
+        return Vrx * dt;
+
+
+
+        /*
+                ESTO FUNCIONA, lo estoy cambiando por un calculo de rs por pirt para intentar sumar el producto aca
+
         const fsrms = (this.culture.f * this.culture.fce_sr) / this.morg.ms;
         const dxFromRemanentFce = this.morg.yxs * this.culture.fce;
         return fsrms + (this.culture.xv - fsrms) * Math.exp(-this.morg.yxsv * this.morg.ms * dt) - this.culture.xv + dxFromRemanentFce;
+        */
 
     }
 
@@ -144,15 +158,18 @@ export class CultureGenerator {
         return this.culture.starve_counter > 0 ? Math.max(dx, 0) : dx;
     }
 
-    getDs(dt, dx) {
-        return this.culture.f * this.culture.fce_sr * dt -
-            (1 / this.morg.yxsv) * dx -
-            this.morg.ms * this.culture.xv * dt -
-            this.morg.ms * dx * dt / 2;
+    getDs(dt, dx, rp) {
+        const Vrx = dx / dt; // vrx in cmol/h
+        const Vrs = Vrx / this.morg.yxsv + this.morg.ms * this.culture.xv + rp/this.morg.ypsv  // Pirt con producto  Vrs = Vrx/y'x/s + ms*xv + rp/y'ps
+        return (this.culture.f * this.culture.fce_sr * dt) - Vrs * dt // incoming fce - consumed fce
+
+        // Old formula. It works as it gives a correct tendency, the math was not tested. Changed to calculate all deltas by geting its velocity from pirt
+        //return this.culture.f * this.culture.fce_sr * dt - (1 / this.morg.yxsv) * dx - this.morg.ms * this.culture.xv * dt - this.morg.ms * dx * dt / 2;
     }
 
-    getDn(dt, dx) {
-        return this.culture.f * this.culture.fn_nr * dt - dx / this.morg.yxn;
+    getDn(dt, dx, dp) {
+        const growthDn = this.culture.f * this.culture.fn_nr * dt - dx / this.morg.yxn
+        return this.morg.ypn > 0 ? growthDn - dp/this.morg.ypn : growthDn ;
     }
 
     getDv(dt) {
@@ -169,32 +186,56 @@ export class CultureGenerator {
         this.graph_data.time.push(this.graph_data.time[this.graph_data.time.length - 1] + dt);
     }
 
+    getCorrectDx(dt, dxRaw) {
+        // Calculo el rs si no hubiese producto y asumo que es el máximo que puede tener
+        const Vrx = dxRaw / dt; // vrx in cmol/h
+        const VrsByVrx = Vrx / this.morg.yxsv + this.morg.ms * this.culture.xv  // Pirt Vrs = Vrx/y'x/s + ms*xv
+        const ds = this.culture.f * this.culture.fce_sr + this.culture.fce
+        const VrsByDs = ds / dt;  // Vrs in cmol/h
+        const Vrs = Math.max(Math.min(VrsByVrx, VrsByDs), 0);
+
+        if (Vrs == 0){
+            return [0,0];
+        }else{
+            // Con el rs maximo ahora calculo cuando rx podria tener si hay producto, luego calculo rp con es rx
+            const Vrx = Math.max(((Vrs - this.morg.ms * this.culture.xv) / this.morg.yxsv) - (this.morg.beta * this.culture.xv / this.morg.yxsv * this.morg.ypsv) / ((1 + this.morg.alfa) / this.morg.yxsv * this.morg.ypsv),0);
+            const Vrp = this.morg.alfa * Vrx + this.morg.beta * this.culture.xv;
+            return [Vrx * dt, Vrp * dt];
+        }
+
+    }
+
     grow(dt) {
-        let dx = this.getDx(dt);
-        let ds = this.getDs(dt, Math.max(dx, 0));
-        let dn = this.getDn(dt, Math.max(dx, 0));
+        let dxRaw = this.getDx(dt);
+        let [dx, dp] = this.getCorrectDx(dt, dxRaw)
+        let ds = this.getDs(dt, dx, dp);
+        let dn = this.getDn(dt, dx, dp);
         let dv = this.getDv(dt);
 
         if (this.culture.overflow) {
             dx -= this.culture.xv / this.culture.v * this.culture.f * dt;
             ds -= this.culture.fce / this.culture.v * this.culture.f * dt;
             dn -= this.culture.fn / this.culture.v * this.culture.f * dt;
+            dp -= this.culture.p / this.culture.v * this.culture.f * dt;
         }
+
 
         let updates = {
             xv: dx,
             fce: ds,
             fn: dn,
-            v: dv
+            v: dv,
+            p: dp
         };
-
         this.updateCulture(dt, updates);
         return {
             xv: this.culture.xv,
             fce: this.culture.fce,
             fn: this.culture.fn,
             v: this.culture.v,
-            cl: this.getCl(dx, dt)*1000
+            cl: this.getVCl(dx, dt) * 1000,
+            p: this.culture.p
+
         };
     }
 }
@@ -207,17 +248,22 @@ export class CultureGenerator {
 /*
 
 Tareas
-
--- EL cl se va a 0 pero no se limita en oxigeno, ambos procesos se calculan de manera diferente. Revisar para que coincidan
-
-
-
-
-****************** TODO LIST *********************
--- Realizar cuentas y comparar con el modelo. Se podria hacer una situacion de testing para la clase
--- Agregar lectura de pH
--- Agregar metabolismo que modifiquen el pH
+************************* DOING *************************
 -- Agregar formacion de producto como parametro de cultivo
+
+************************* COMENTS *************************
+-- Quedo bien, no detecte errores por ahora, no lo testie a fondo igual
+-- Queda un tema no tratado, el Ro2 esta completamente ligado al consumo de fce. Si metemos un producto de fermentacion habria que discriminar
+   el consumo de sustrato en consumo aerobico y consumo anaerobico, de esta manera podemos seguir calculando el ro2 bien y podemos sumar 
+   el calculo de rc02 ya que estamos en el baile
+
+
+
+************************* TODO LIST *************************
+-- Realizar cuentas y comparar con el modelo. Se podria hacer una situacion de testing para la clase
+-- Agregar un boton que permita intercalar la escala del grafico entre concentracion y cantidad
+-- Agregar metabolismo que modifiquen el pH
+-- Agregar lectura de pH
 -- Agregar formacion de producto por limitacion por oxigeno
 -- Agregar opcion para meter inhibidores
 

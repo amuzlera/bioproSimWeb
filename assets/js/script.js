@@ -3,7 +3,8 @@ import { CultureGenerator } from './CultureGenerator.js';
 
 // Datos de ejemplo, reemplaza con tus propios datos o usa fetch para cargarlos
 const morg_data = {
-    umax: 0.4, ms: 0.05, yxsv: 0.7, starve_counter: 2
+    //umax: 0.4, ms: 0.05, yxsv: 0.7, starve_counter: 2, ypsv: 0, beta:0, alfa:0
+    umax: 0.4, ms: 0.05, yxsv: 0.7, starve_counter: 2, ypsv: 0.2, beta:0.1, alfa:0.3
 };
 const bior_data = {
     kla: 1000
